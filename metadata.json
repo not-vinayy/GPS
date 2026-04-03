@@ -1,0 +1,7 @@
+{
+  "name": "GPS Fitness Tracker",
+  "description": "A Strava-like GPS fitness tracking web app using Mapbox and localStorage.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
