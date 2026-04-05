@@ -35,6 +35,12 @@ export default function App() {
     handleSaveActivity(demoActivity);
   };
 
+  const handleRenameActivity = (id: string, name: string) => {
+    const updated = activities.map(a => a.id === id ? { ...a, name } : a);
+    setActivities(updated);
+    localStorage.setItem('strava_clone_activities', JSON.stringify(updated));
+  };
+
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden font-sans">
       {/* Main Content Area */}
@@ -42,10 +48,11 @@ export default function App() {
         {activeTab === 'record' ? (
           <Tracker onSaveActivity={handleSaveActivity} />
         ) : (
-          <ActivityHistory 
-            activities={activities} 
-            onReplay={(activity) => setReplayingActivity(activity)} 
+          <ActivityHistory
+            activities={activities}
+            onReplay={(activity) => setReplayingActivity(activity)}
             onAddDemo={handleAddDemo}
+            onRename={handleRenameActivity}
           />
         )}
 

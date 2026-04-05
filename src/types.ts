@@ -7,6 +7,7 @@ export interface Coordinate {
 
 export interface Activity {
   id: string;
+  name?: string;
   timestamp: number;
   coordinates: Coordinate[];
   distance: number; // in km

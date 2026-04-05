@@ -39,6 +39,14 @@ export function calculateSpeed(distanceKm: number, durationSeconds: number): num
   return distanceKm / hours;
 }
 
+export function formatPace(distanceKm: number, durationSeconds: number): string {
+  if (distanceKm === 0) return '--:--';
+  const secsPerKm = durationSeconds / distanceKm;
+  const minutes = Math.floor(secsPerKm / 60);
+  const seconds = Math.round(secsPerKm % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 export function calculateBearing(start: Coordinate, end: Coordinate): number {
   const startLat = (start.lat * Math.PI) / 180;
   const startLng = (start.lng * Math.PI) / 180;

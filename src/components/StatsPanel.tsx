@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDuration } from '../utils/geo';
+import { formatDuration, formatPace } from '../utils/geo';
 
 interface StatsPanelProps {
   distance: number;
@@ -34,9 +34,9 @@ export default function StatsPanel({
           </div>
         </div>
         <div className="bg-purple-50 p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-purple-100">
-          <div className="text-xs font-medium text-purple-600 mb-1">Speed</div>
+          <div className="text-xs font-medium text-purple-600 mb-1">Pace</div>
           <div className="text-2xl font-bold text-purple-900">
-            {speed.toFixed(1)} <span className="text-sm font-medium text-purple-700">km/h</span>
+            {formatPace(distance, duration)} <span className="text-sm font-medium text-purple-700">/km</span>
           </div>
         </div>
         <div className="bg-amber-50 p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-amber-100">
