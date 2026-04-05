@@ -68,6 +68,17 @@ jobs:
       - name: Patch AndroidManifest.xml
         run: bash scripts/patch-manifest.sh
 
+      # Generate adaptive icon PNGs (mipmap-*) from public/icon.svg
+      - name: Generate Android icons
+        run: >
+          npx @capacitor/assets@latest generate
+          --iconPath public/icon.svg
+          --android
+          --androidPath android
+          --iconBackgroundColor "#0f172a"
+          --iconBackgroundColorDark "#0f172a"
+        continue-on-error: true   # icon gen is nice-to-have; don't fail the build
+
       # Copy web build into the native project & install plugin native deps
       - name: Sync Capacitor
         run: npx cap sync android
