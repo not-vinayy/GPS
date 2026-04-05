@@ -5,6 +5,7 @@ import ReplayPlayer from './components/ReplayPlayer';
 import { Activity } from './types';
 import { Activity as ActivityIcon, History } from 'lucide-react';
 import { generateDemoActivity } from './utils/demo';
+import { logger } from './utils/logger';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'record' | 'history'>('record');
@@ -13,13 +14,18 @@ export default function App() {
 
   // Load activities from localStorage on mount
   useEffect(() => {
+    logger.info('app', 'App mounted', { userAgent: navigator.userAgent });
     const saved = localStorage.getItem('trace_activities');
     if (saved) {
       try {
-        setActivities(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setActivities(parsed);
+        logger.info('storage', 'Activities loaded from localStorage', { count: parsed.length });
       } catch (e) {
-        console.error('Failed to parse activities from localStorage', e);
+        logger.error('storage', 'Failed to parse activities from localStorage', { err: String(e) });
       }
+    } else {
+      logger.info('storage', 'No saved activities found');
     }
   }, []);
 

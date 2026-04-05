@@ -12,9 +12,11 @@ import MapView from './MapView';
 import StatsPanel from './StatsPanel';
 import { Coordinate, Activity } from '../types';
 import { calculateDistance, calculateSpeed } from '../utils/geo';
+import { logger } from '../utils/logger';
 
 /** True when running inside the Capacitor Android/iOS shell. */
 const isNative = Capacitor.isNativePlatform();
+logger.info('app', 'Platform detected', { native: isNative, platform: Capacitor.getPlatform() });
 
 interface TrackerProps {
   onSaveActivity: (activity: Activity) => void;
@@ -54,7 +56,14 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
     timestamp: number,
   ) => {
     // Discard noisy fixes (>20 m accuracy)
-    if (accuracy > 20) return;
+    if (accuracy > 20) {
+      logger.debug('gps', 'Fix discarded — accuracy too low', { accuracy: Math.round(accuracy) });
+      return;
+    }
+
+    logger.debug('gps', 'Fix received', {
+      lat: lat.toFixed(5), lng: lng.toFixed(5), accuracy: Math.round(accuracy),
+    });
 
     const newCoord: Coordinate = { lat, lng, altitude, timestamp };
     setCurrentLocation(newCoord);
@@ -82,10 +91,18 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
   // ── Acquire initial location on mount ────────────────────────────────────
   useEffect(() => {
     const init = async () => {
+      logger.info('gps', 'Requesting initial location…', { native: isNative });
       try {
         if (isNative) {
-          await Geolocation.requestPermissions();
+          logger.info('permissions', 'Requesting location permission (native)');
+          const perm = await Geolocation.requestPermissions();
+          logger.info('permissions', 'Permission result', { location: perm.location });
           const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+          logger.info('gps', 'Initial location acquired', {
+            lat: pos.coords.latitude.toFixed(5),
+            lng: pos.coords.longitude.toFixed(5),
+            accuracy: Math.round(pos.coords.accuracy),
+          });
           setCurrentLocation({
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
@@ -94,25 +111,33 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
           });
         } else {
           if (!('geolocation' in navigator)) {
+            logger.error('gps', 'navigator.geolocation not available');
             setError('Geolocation is not supported by your browser.');
             return;
           }
           navigator.geolocation.getCurrentPosition(
-            pos => setCurrentLocation({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              altitude: pos.coords.altitude,
-              timestamp: pos.timestamp,
-            }),
+            pos => {
+              logger.info('gps', 'Initial location acquired (web)', {
+                lat: pos.coords.latitude.toFixed(5),
+                lng: pos.coords.longitude.toFixed(5),
+                accuracy: Math.round(pos.coords.accuracy),
+              });
+              setCurrentLocation({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                altitude: pos.coords.altitude,
+                timestamp: pos.timestamp,
+              });
+            },
             err => {
-              console.error(err);
+              logger.error('gps', 'Initial location failed', { code: err.code, message: err.message });
               setError('Could not get your location. Please check permissions.');
             },
             { enableHighAccuracy: true },
           );
         }
       } catch (e) {
-        console.error(e);
+        logger.error('gps', 'Unexpected error getting initial location', { err: String(e) });
         setError('Could not get your location. Please check permissions.');
       }
     };
@@ -121,6 +146,7 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
 
   // ── Start recording ───────────────────────────────────────────────────────
   const startTracking = async () => {
+    logger.info('recording', 'Start recording requested', { native: isNative });
     setError(null);
     setCoordinates([]);
     setDistance(0);
@@ -133,8 +159,11 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
     if (isNative) {
       try {
         // Ensure we have foreground location permission before starting
+        logger.info('permissions', 'Requesting location permission before recording');
         const perm = await Geolocation.requestPermissions();
+        logger.info('permissions', 'Permission result', { location: perm.location });
         if (perm.location !== 'granted') {
+          logger.warn('permissions', 'Location permission denied — aborting recording');
           setError('Location permission is required to record a run.');
           setIsRecording(false);
           clearInterval(timerRef.current!);
@@ -157,6 +186,7 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
           },
           (location, err) => {
             if (err) {
+              logger.error('gps', 'BackgroundGeolocation error', { code: err.code, message: err.message });
               if (err.code === 'NOT_AUTHORIZED') {
                 setError('Location permission denied. Please enable it in Settings.');
                 BackgroundGeolocation.openSettings();
@@ -173,8 +203,9 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
             );
           },
         );
+        logger.info('gps', 'BackgroundGeolocation watcher started', { watcherId: nativeWatchIdRef.current });
       } catch (e) {
-        console.error(e);
+        logger.error('recording', 'Failed to start native GPS tracking', { err: String(e) });
         setError('Failed to start GPS tracking.');
         setIsRecording(false);
         clearInterval(timerRef.current!);
@@ -182,6 +213,7 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
       }
     } else {
       // ── Browser fallback ─────────────────────────────────────────────────
+      logger.info('gps', 'Starting navigator.geolocation.watchPosition (web)');
       webWatchIdRef.current = navigator.geolocation.watchPosition(
         pos => processLocation(
           pos.coords.latitude,
@@ -191,12 +223,14 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
           pos.timestamp,
         ),
         err => {
-          console.error(err);
+          logger.error('gps', 'watchPosition error', { code: err.code, message: err.message });
           setError('Lost GPS signal or permission denied.');
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 },
       );
+      logger.info('gps', 'watchPosition started', { watchId: webWatchIdRef.current });
     }
+    logger.info('recording', 'Recording started');
   };
 
   // ── Stop recording & save ─────────────────────────────────────────────────
@@ -217,19 +251,32 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
     }
 
     // Read from refs to get the very latest values (guards against async lag)
-    const finalCoords = coordsRef.current;
-    const finalDistance = distanceRef.current;
-    const finalDuration = durationRef.current;
+    const finalCoords    = coordsRef.current;
+    const finalDistance  = distanceRef.current;
+    const finalDuration  = durationRef.current;
     const finalElevation = elevationRef.current;
 
+    logger.info('recording', 'Recording stopped', {
+      coords:    finalCoords.length,
+      distance:  finalDistance.toFixed(3) + 'km',
+      duration:  finalDuration + 's',
+      elevation: finalElevation.toFixed(1) + 'm',
+    });
+
     if (finalCoords.length > 1 && finalDistance > 0) {
+      const id = Date.now().toString();
+      logger.info('recording', 'Saving activity', { id, distance: finalDistance.toFixed(3), duration: finalDuration });
       onSaveActivity({
-        id: Date.now().toString(),
+        id,
         timestamp: finalCoords[0].timestamp,
         coordinates: finalCoords,
         distance: finalDistance,
         duration: finalDuration,
         elevationGain: finalElevation,
+      });
+    } else {
+      logger.warn('recording', 'Activity discarded — too few points or zero distance', {
+        coords: finalCoords.length, distance: finalDistance,
       });
     }
   };
