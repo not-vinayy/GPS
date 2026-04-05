@@ -21,41 +21,51 @@ export default function StatsPanel({
   onStop,
 }: StatsPanelProps) {
   return (
-    <div className="w-full bg-slate-50 flex flex-col gap-4 p-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-slate-100">
-          <div className="text-xs font-medium text-slate-500 mb-1">Time</div>
-          <div className="text-2xl font-bold text-slate-800">{formatDuration(duration)}</div>
+    <div className="bg-[#0e0e0e] border-t border-white/[0.06] px-4 pt-4 pb-5">
+      {/* Stats grid */}
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="bg-[#161616] rounded-xl p-3 flex flex-col items-center">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#555] mb-1">Time</span>
+          <span className="font-barlow text-2xl font-bold text-white leading-none tabular-nums">
+            {formatDuration(duration)}
+          </span>
         </div>
-        <div className="bg-blue-50 p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-blue-100">
-          <div className="text-xs font-medium text-blue-600 mb-1">Distance</div>
-          <div className="text-2xl font-bold text-blue-900">
-            {distance.toFixed(2)} <span className="text-sm font-medium text-blue-700">km</span>
-          </div>
+
+        <div className="bg-[#161616] rounded-xl p-3 flex flex-col items-center">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#ff4500] mb-1">Dist</span>
+          <span className="font-barlow text-2xl font-bold text-white leading-none tabular-nums">
+            {distance.toFixed(2)}
+          </span>
+          <span className="text-[9px] text-[#444] mt-0.5">km</span>
         </div>
-        <div className="bg-purple-50 p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-purple-100">
-          <div className="text-xs font-medium text-purple-600 mb-1">Pace</div>
-          <div className="text-2xl font-bold text-purple-900">
-            {formatPace(distance, duration)} <span className="text-sm font-medium text-purple-700">/km</span>
-          </div>
+
+        <div className="bg-[#161616] rounded-xl p-3 flex flex-col items-center">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#555] mb-1">Pace</span>
+          <span className="font-barlow text-2xl font-bold text-white leading-none tabular-nums">
+            {formatPace(distance, duration)}
+          </span>
+          <span className="text-[9px] text-[#444] mt-0.5">/km</span>
         </div>
-        <div className="bg-amber-50 p-4 flex flex-col justify-center items-center rounded-2xl shadow-sm border border-amber-100">
-          <div className="text-xs font-medium text-amber-600 mb-1">Altitude</div>
-          <div className="text-2xl font-bold text-amber-900">
-            {altitude !== null ? Math.round(altitude) : '--'} <span className="text-sm font-medium text-amber-700">m</span>
-          </div>
+
+        <div className="bg-[#161616] rounded-xl p-3 flex flex-col items-center">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#555] mb-1">Alt</span>
+          <span className="font-barlow text-2xl font-bold text-white leading-none tabular-nums">
+            {altitude !== null ? Math.round(altitude) : '--'}
+          </span>
+          <span className="text-[9px] text-[#444] mt-0.5">m</span>
         </div>
       </div>
 
+      {/* Start / Stop button */}
       <button
         onClick={isRecording ? onStop : onStart}
-        className={`w-full py-4 font-semibold text-lg rounded-full shadow-md transition-all duration-300 active:scale-[0.98] ${
-          isRecording 
-            ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:shadow-lg' 
-            : 'bg-emerald-300 text-emerald-900 hover:bg-emerald-400 hover:shadow-lg'
+        className={`w-full py-4 rounded-2xl font-bold text-base tracking-widest uppercase transition-all duration-300 active:scale-[0.97] ${
+          isRecording
+            ? 'bg-rose-600 text-white recording-pulse'
+            : 'bg-[#ff4500] text-white shadow-[0_0_30px_rgba(255,69,0,0.2)] hover:shadow-[0_0_40px_rgba(255,69,0,0.35)]'
         }`}
       >
-        {isRecording ? 'Stop Activity' : 'Start Activity'}
+        {isRecording ? '■  Stop Activity' : '▶  Start Run'}
       </button>
     </div>
   );

@@ -17,7 +17,7 @@ interface ActivityHistoryProps {
 
 function RouteThumbnail({ coordinates }: { coordinates: Coordinate[] }) {
   if (coordinates.length < 2) {
-    return <div className="w-[72px] h-[72px] rounded-2xl bg-slate-100 shrink-0" />;
+    return <div className="w-16 h-16 rounded-xl bg-[#1e1e1e] shrink-0" />;
   }
 
   const lats = coordinates.map(c => c.lat);
@@ -25,7 +25,7 @@ function RouteThumbnail({ coordinates }: { coordinates: Coordinate[] }) {
   const minLat = Math.min(...lats), maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
 
-  const W = 100, H = 100, PAD = 10;
+  const W = 100, H = 100, PAD = 12;
   const rangeX = maxLng - minLng || 1e-10;
   const rangeY = maxLat - minLat || 1e-10;
 
@@ -43,17 +43,18 @@ function RouteThumbnail({ coordinates }: { coordinates: Coordinate[] }) {
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      width={72}
-      height={72}
-      className="rounded-2xl bg-slate-100 shrink-0"
+      width={64}
+      height={64}
+      className="rounded-xl bg-[#1a1a1a] shrink-0"
     >
       <polyline
         points={points}
         fill="none"
-        stroke="#fc4c02"
-        strokeWidth="3"
+        stroke="#ff4500"
+        strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        opacity="0.9"
       />
     </svg>
   );
@@ -100,55 +101,48 @@ function ShareModal({ activity, onClose }: ShareModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-        {/* Header */}
+      <div className="w-full max-w-sm bg-[#111] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-white/[0.08]">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-800">Share Activity</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{name}</p>
+            <h3 className="text-base font-bold text-white">Share Activity</h3>
+            <p className="text-xs text-[#555] mt-0.5">{name}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
-            <X className="w-4 h-4 text-slate-600" />
+          <button onClick={onClose} className="p-2 rounded-full bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors">
+            <X className="w-4 h-4 text-[#888]" />
           </button>
         </div>
 
-        {/* Card preview */}
         <div className="px-5 pb-4">
           {genError ? (
-            <div className="w-full aspect-[3/4] rounded-2xl bg-slate-100 flex flex-col items-center justify-center gap-2 text-slate-400">
+            <div className="w-full aspect-[3/4] rounded-2xl bg-[#1a1a1a] flex flex-col items-center justify-center gap-2 text-[#555]">
               <MapPin className="w-8 h-8 opacity-40" />
               <p className="text-sm font-medium">Couldn't generate card</p>
             </div>
           ) : imageUrl ? (
             <img src={imageUrl} alt="Activity share card" className="w-full rounded-2xl shadow-md" />
           ) : (
-            /* Loading skeleton — map is rendering off-screen */
-            <div className="w-full aspect-[3/4] rounded-2xl bg-slate-900 overflow-hidden relative flex flex-col items-center justify-end pb-8 gap-3">
-              {/* Simulated dark map shimmer */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 animate-pulse" />
-              {/* Fake route line shimmer */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-0.5 rounded-full bg-orange-500/30 animate-pulse" />
-              {/* Spinner */}
+            <div className="w-full aspect-[3/4] rounded-2xl bg-[#111] overflow-hidden relative flex flex-col items-center justify-end pb-8 gap-3">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] via-[#111] to-[#1a1a1a] animate-pulse" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-0.5 rounded-full bg-[#ff4500]/20 animate-pulse" />
               <div className="relative flex flex-col items-center gap-2">
-                <svg className="animate-spin w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="none">
+                <svg className="animate-spin w-6 h-6 text-[#ff4500]" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
                   <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                <p className="text-xs text-slate-400 font-medium tracking-wide">Rendering map…</p>
+                <p className="text-xs text-[#555] font-medium tracking-wide">Rendering map…</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 px-5 pb-6">
           <button
             onClick={handleShare}
             disabled={!imageUrl || sharing}
-            className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-900 text-white font-semibold rounded-2xl hover:bg-slate-700 transition-colors disabled:opacity-40"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-[#ff4500] text-white font-semibold rounded-2xl hover:bg-[#e03d00] transition-colors disabled:opacity-40"
           >
             <Share2 className="w-4 h-4" />
             {sharing ? 'Sharing…' : 'Share'}
@@ -156,7 +150,7 @@ function ShareModal({ activity, onClose }: ShareModalProps) {
           <button
             onClick={handleDownload}
             disabled={!imageUrl}
-            className="flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-100 text-slate-700 font-semibold rounded-2xl hover:bg-slate-200 transition-colors disabled:opacity-40"
+            className="flex items-center justify-center gap-2 px-5 py-3.5 bg-[#1e1e1e] text-[#888] font-semibold rounded-2xl hover:bg-[#2a2a2a] hover:text-white transition-colors disabled:opacity-40"
           >
             <Download className="w-4 h-4" />
             Save
@@ -199,36 +193,45 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-4">
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-slate-800">Your Traces</h2>
-          {syncing && <CloudUpload className="w-4 h-4 text-blue-400 animate-pulse" title="Syncing…" />}
+    <div className="h-full flex flex-col bg-[#0a0a0a]">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-[#0a0a0a] border-b border-white/[0.05] px-4 pt-5 pb-4 flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#444] mb-0.5">Your Activities</p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white">Traces</h2>
+            {syncing && <CloudUpload className="w-4 h-4 text-[#ff4500] animate-pulse" />}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowLogs(true)}
-            className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+            className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[#555] hover:text-white transition-colors border border-white/[0.06]"
             title="Debug logs"
           >
             <Terminal className="w-4 h-4" />
           </button>
           <button
             onClick={onAddDemo}
-            className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-medium text-sm hover:bg-blue-100 transition-colors"
+            className="px-4 py-2 bg-[#1a1a1a] text-[#777] text-sm font-medium rounded-full hover:text-white border border-white/[0.06] transition-colors"
           >
-            Add Demo
+            + Demo
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      {/* Activity list */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {activities.length === 0 ? (
-          <div className="bg-white p-10 flex flex-col items-center text-center rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="text-xl font-semibold mb-4 text-slate-700">No Activities Yet</h2>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[#1a1a1a] flex items-center justify-center mb-4">
+              <MapPin className="w-7 h-7 text-[#333]" />
+            </div>
+            <p className="text-[#555] font-medium mb-1">No activities yet</p>
+            <p className="text-[#333] text-sm mb-6">Go for a run or try a demo</p>
             <button
               onClick={onAddDemo}
-              className="bg-emerald-300 text-emerald-900 px-8 py-3 rounded-full font-medium shadow-sm hover:bg-emerald-400 hover:shadow-md transition-all"
+              className="px-8 py-3 bg-[#ff4500] text-white font-semibold rounded-2xl shadow-[0_0_24px_rgba(255,69,0,0.2)] hover:bg-[#e03d00] transition-colors"
             >
               Load Demo
             </button>
@@ -241,22 +244,22 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
             const displayName = activity.name ?? format(new Date(activity.timestamp), 'EEEE, MMMM d');
 
             return (
-              <div key={activity.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                {/* Top row: thumbnail + title + badges */}
-                <div className="flex items-center gap-4 px-5 pt-5 pb-3">
+              <div key={activity.id} className="bg-[#111] rounded-2xl border border-white/[0.06] overflow-hidden">
+                {/* Top: thumbnail + title */}
+                <div className="flex items-start gap-3 p-4">
                   <RouteThumbnail coordinates={activity.coordinates} />
 
                   <div className="flex-1 min-w-0">
                     {(isLongest || isFastest) && (
-                      <div className="flex gap-2 mb-1.5">
+                      <div className="flex gap-1.5 mb-2">
                         {isLongest && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                            <Trophy className="w-3 h-3" /> Longest
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">
+                            <Trophy className="w-2.5 h-2.5" /> Longest
                           </span>
                         )}
                         {isFastest && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                            <Zap className="w-3 h-3" /> Fastest
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full">
+                            <Zap className="w-2.5 h-2.5" /> Fastest
                           </span>
                         )}
                       </div>
@@ -273,68 +276,77 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
                             if (e.key === 'Escape') setEditingId(null);
                           }}
                           onBlur={() => commitEdit(activity.id)}
-                          className="flex-1 text-base font-bold text-slate-800 bg-slate-100 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-blue-300 min-w-0"
+                          className="flex-1 text-sm font-bold text-white bg-[#1e1e1e] rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-[#ff4500]/50 min-w-0"
                         />
                         <button
                           onMouseDown={e => { e.preventDefault(); commitEdit(activity.id); }}
-                          className="p-1 text-emerald-600 hover:text-emerald-700"
+                          className="p-1 text-emerald-500"
                         >
                           <Check className="w-4 h-4" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 group">
-                        <span className="text-base font-bold text-slate-800 truncate">{displayName}</span>
+                        <span className="text-sm font-bold text-white truncate">{displayName}</span>
                         <button
                           onClick={() => startEdit(activity)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-slate-600 shrink-0"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-[#444] hover:text-[#888] shrink-0"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
+                          <Pencil className="w-3 h-3" />
                         </button>
                       </div>
                     )}
 
-                    <p className="text-xs text-slate-400 mt-0.5">{format(new Date(activity.timestamp), 'h:mm a · MMM d, yyyy')}</p>
+                    <p className="text-[11px] text-[#444] mt-0.5">
+                      {format(new Date(activity.timestamp), 'h:mm a · MMM d, yyyy')}
+                    </p>
                   </div>
                 </div>
 
-                {/* Bottom row: stats + replay + share */}
-                <div className="flex gap-2 px-5 pb-5">
-                  <div className="flex-1 bg-blue-50 p-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 mb-0.5">Dist</span>
-                    <span className="text-lg font-bold text-blue-900 leading-none">{activity.distance.toFixed(2)}</span>
-                    <span className="text-[10px] text-blue-500 mt-0.5">km</span>
-                  </div>
-                  <div className="flex-1 bg-purple-50 p-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-purple-600 mb-0.5">Pace</span>
-                    <span className="text-lg font-bold text-purple-900 leading-none">{formatPace(activity.distance, activity.duration)}</span>
-                    <span className="text-[10px] text-purple-500 mt-0.5">/km</span>
-                  </div>
-                  <div className="flex-1 bg-slate-50 p-3 rounded-2xl flex flex-col items-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-0.5">Time</span>
-                    <span className="text-lg font-bold text-slate-800 leading-none">{formatDuration(activity.duration)}</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">hh:mm</span>
-                  </div>
+                {/* Stats row */}
+                <div className="flex border-t border-white/[0.05]">
+                  {[
+                    { label: 'DIST', value: activity.distance.toFixed(2), unit: 'km', accent: true },
+                    { label: 'PACE', value: formatPace(activity.distance, activity.duration), unit: '/km', accent: false },
+                    { label: 'TIME', value: formatDuration(activity.duration), unit: '', accent: false },
+                  ].map((stat, i) => (
+                    <div
+                      key={stat.label}
+                      className={`flex-1 py-3 flex flex-col items-center ${i < 2 ? 'border-r border-white/[0.05]' : ''}`}
+                    >
+                      <span className="text-[9px] font-semibold tracking-widest text-[#3a3a3a] uppercase">{stat.label}</span>
+                      <span
+                        className="font-barlow text-xl font-bold mt-0.5 leading-none"
+                        style={{ color: stat.accent ? '#ff4500' : '#e5e5e5' }}
+                      >
+                        {stat.value}
+                      </span>
+                      {stat.unit && <span className="text-[9px] text-[#333] mt-0.5">{stat.unit}</span>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex border-t border-white/[0.05]">
                   <button
                     onClick={() => onReplay(activity)}
-                    className="flex flex-col items-center justify-center px-3 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-2xl transition-colors shadow-sm shrink-0"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#555] hover:text-[#ff4500] hover:bg-[#ff4500]/5 transition-colors text-xs font-semibold"
                   >
-                    <Play className="w-4 h-4 mb-1" />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider">Replay</span>
+                    <Play className="w-3.5 h-3.5" /> Replay
                   </button>
+                  <div className="w-px bg-white/[0.05]" />
                   <button
                     onClick={() => setSharingActivity(activity)}
-                    className="flex flex-col items-center justify-center px-3 bg-slate-900 hover:bg-slate-700 text-white rounded-2xl transition-colors shadow-sm shrink-0"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#555] hover:text-white hover:bg-white/[0.04] transition-colors text-xs font-semibold"
                   >
-                    <Share2 className="w-4 h-4 mb-1" />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider">Share</span>
+                    <Share2 className="w-3.5 h-3.5" /> Share
                   </button>
+                  <div className="w-px bg-white/[0.05]" />
                   <button
                     onClick={() => { if (confirm('Delete this activity?')) onDelete(activity.id); }}
-                    className="flex flex-col items-center justify-center px-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-2xl transition-colors shadow-sm shrink-0"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[#444] hover:text-rose-400 hover:bg-rose-400/5 transition-colors text-xs font-semibold"
                   >
-                    <Trash2 className="w-4 h-4 mb-1" />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider">Del</span>
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

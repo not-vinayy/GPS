@@ -296,14 +296,14 @@ export default function Tracker({ onSaveActivity }: TrackerProps) {
   const speed = calculateSpeed(distance, duration);
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-50">
+    <div className="flex flex-col w-full h-full bg-[#0a0a0a]">
       {error && (
-        <div className="bg-rose-100 text-rose-800 px-4 py-3 text-center text-sm shadow-sm z-10 relative m-4 rounded-2xl border border-rose-200">
+        <div className="bg-rose-950/80 text-rose-300 px-4 py-3 text-center text-sm z-10 relative m-3 rounded-2xl border border-rose-800/50 backdrop-blur-sm">
           {error}
         </div>
       )}
 
-      <div className="flex-1 relative rounded-b-3xl overflow-hidden shadow-sm z-0">
+      <div className="flex-1 relative overflow-hidden z-0">
         <MapView coordinates={coordinates} currentLocation={currentLocation} />
       </div>
 

@@ -7,7 +7,7 @@ import ActivityHistory from './components/ActivityHistory';
 import ReplayPlayer from './components/ReplayPlayer';
 import LoginScreen from './components/LoginScreen';
 import { Activity } from './types';
-import { Activity as ActivityIcon, History, LogOut, Loader } from 'lucide-react';
+import { Activity as ActivityIcon, History, Loader } from 'lucide-react';
 import { generateDemoActivity } from './utils/demo';
 import { logger } from './utils/logger';
 
@@ -16,7 +16,6 @@ export default function App() {
   const [replayingActivity, setReplayingActivity] = useState<Activity | null>(null);
   const [user,              setUser]              = useState<User | null | 'loading'>('loading');
 
-  // ── Auth state ────────────────────────────────────────────────────────────
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => {
       setUser(u);
@@ -29,11 +28,9 @@ export default function App() {
     return unsub;
   }, []);
 
-  // ── Activities (Firestore when signed in, localStorage when not) ──────────
   const uid = user === 'loading' || user === null ? null : user.uid;
   const { activities, saveActivity, renameActivity, deleteActivity, syncing } = useActivities(uid);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleSaveActivity = async (activity: Activity) => {
     await saveActivity(activity);
     setActiveTab('history');
@@ -49,25 +46,27 @@ export default function App() {
     logger.info('app', 'User signed out');
   };
 
-  // ── Loading splash ────────────────────────────────────────────────────────
   if (user === 'loading') {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-950">
-        <Loader className="w-8 h-8 text-orange-500 animate-spin" />
+      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader className="w-7 h-7 text-[#ff4500] animate-spin" />
+          <p className="text-[#444] text-sm font-medium tracking-wide">Loading…</p>
+        </div>
       </div>
     );
   }
 
-  // ── Unauthenticated ───────────────────────────────────────────────────────
   if (user === null) {
     return <LoginScreen />;
   }
 
-  // ── Authenticated app ─────────────────────────────────────────────────────
+  const initial = (user.email?.[0] ?? user.displayName?.[0] ?? '?').toUpperCase();
+
   return (
-    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden font-sans">
-      {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden bg-slate-50">
+    <div className="flex flex-col h-screen bg-[#0a0a0a] text-white overflow-hidden">
+      {/* Main content — padded bottom so content never hides behind nav */}
+      <div className="flex-1 relative overflow-hidden pb-24">
         {activeTab === 'record' ? (
           <Tracker onSaveActivity={handleSaveActivity} />
         ) : (
@@ -81,7 +80,6 @@ export default function App() {
           />
         )}
 
-        {/* Replay Overlay */}
         {replayingActivity && (
           <ReplayPlayer
             activity={replayingActivity}
@@ -90,45 +88,48 @@ export default function App() {
         )}
       </div>
 
-      {/* Navigation bar */}
-      <div className="flex h-20 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] rounded-t-3xl px-4 pb-2 pt-2 z-10 relative">
-        <button
-          onClick={() => setActiveTab('record')}
-          className={`flex-1 flex flex-col items-center justify-center font-medium text-sm transition-all duration-300 rounded-2xl mx-1 ${
-            activeTab === 'record' ? 'bg-blue-100 text-blue-700 shadow-sm' : 'bg-transparent hover:bg-slate-50 text-slate-500'
-          }`}
-        >
-          <ActivityIcon className="w-5 h-5 mb-1" />
-          Record
-        </button>
+      {/* Floating pill navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-center pb-safe pointer-events-none">
+        <div className="flex bg-[#161616] border border-white/[0.08] rounded-full px-1.5 py-1.5 gap-1 shadow-[0_8px_40px_rgba(0,0,0,0.8)] pointer-events-auto">
+          <button
+            onClick={() => setActiveTab('record')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              activeTab === 'record'
+                ? 'bg-[#ff4500] text-white shadow-[0_0_20px_rgba(255,69,0,0.35)]'
+                : 'text-[#555] hover:text-white'
+            }`}
+          >
+            <ActivityIcon className="w-4 h-4" />
+            Record
+          </button>
 
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex-1 flex flex-col items-center justify-center font-medium text-sm transition-all duration-300 rounded-2xl mx-1 ${
-            activeTab === 'history' ? 'bg-purple-100 text-purple-700 shadow-sm' : 'bg-transparent hover:bg-slate-50 text-slate-500'
-          }`}
-        >
-          <History className="w-5 h-5 mb-1" />
-          History
-        </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              activeTab === 'history'
+                ? 'bg-[#ff4500] text-white shadow-[0_0_20px_rgba(255,69,0,0.35)]'
+                : 'text-[#555] hover:text-white'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            History
+          </button>
 
-        {/* User avatar + sign-out */}
-        <button
-          onClick={handleSignOut}
-          className="flex flex-col items-center justify-center px-3 text-slate-400 hover:text-rose-500 transition-colors rounded-2xl hover:bg-rose-50 mx-1"
-          title={`Signed in as ${user.email ?? user.displayName ?? 'user'}`}
-        >
-          {user.photoURL ? (
-            <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full mb-1" />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center mb-1">
-              {(user.email?.[0] ?? user.displayName?.[0] ?? '?').toUpperCase()}
-            </div>
-          )}
-          <span className="text-[9px] font-semibold uppercase tracking-wider">
-            <LogOut className="w-3 h-3 inline" />
-          </span>
-        </button>
+          {/* Avatar / sign-out */}
+          <button
+            onClick={handleSignOut}
+            title={`Sign out (${user.email ?? user.displayName ?? 'user'})`}
+            className="flex items-center justify-center px-3 py-2.5 rounded-full text-[#555] hover:text-rose-400 transition-colors group"
+          >
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full ring-1 ring-white/10 group-hover:ring-rose-500/40 transition-all" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-[#ff4500] text-white text-[10px] font-bold flex items-center justify-center">
+                {initial}
+              </div>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

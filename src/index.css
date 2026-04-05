@@ -1,17 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background-color: #f8fafc;
-  color: #334155;
+  background-color: #0a0a0a;
+  color: #f5f5f5;
 }
 
-/* Material Range Slider */
+.font-barlow {
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/* Range slider — dark orange style */
 input[type=range] {
   -webkit-appearance: none;
   background: transparent;
@@ -19,22 +27,31 @@ input[type=range] {
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 20px;
-  width: 20px;
-  background: #93c5fd;
+  height: 18px;
+  width: 18px;
+  background: #ff4500;
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-top: -7px;
+  box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
   transition: transform 0.1s;
 }
 input[type=range]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+  transform: scale(1.2);
 }
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
-  height: 4px;
+  height: 3px;
   cursor: pointer;
-  background: #e2e8f0;
+  background: #2a2a2a;
   border-radius: 2px;
+}
+
+/* Pulsing glow for active recording button */
+@keyframes record-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5), 0 4px 24px rgba(239, 68, 68, 0.25); }
+  50%       { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0), 0 4px 24px rgba(239, 68, 68, 0.15); }
+}
+.recording-pulse {
+  animation: record-glow 1.8s ease-in-out infinite;
 }
