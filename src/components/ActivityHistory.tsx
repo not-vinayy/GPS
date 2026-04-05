@@ -197,7 +197,7 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4">
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">Archive</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Your Traces</h2>
         <button
           onClick={onAddDemo}
           className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-medium text-sm hover:bg-blue-100 transition-colors"

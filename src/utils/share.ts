@@ -7,43 +7,75 @@ const CARD_W = 600;
 const CARD_H = 800;
 const DPR = 2;
 
-// Load a condensed athletic font for numbers
+// Load a clean modern sans-serif font
 async function loadFont(): Promise<void> {
-  if (document.fonts.check('700 48px Oswald')) return;
+  if (document.fonts.check('700 48px Inter')) return;
   try {
     const bold = new FontFace(
-      'Oswald',
-      'url(https://fonts.gstatic.com/s/oswald/v53/TK3_WkUHHAIjg75cFRf3bXL8LICs1_FvsUtiZTaR.woff2) format("woff2")',
+      'Inter',
+      'url(https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGkyMZhrib2Bg-4.woff2) format("woff2")',
       { weight: '700' }
     );
-    const light = new FontFace(
-      'Oswald',
-      'url(https://fonts.gstatic.com/s/oswald/v53/TK3iWkUHHAIjg75cFRf3bXL8LICs1xZosUtiZSWqVw.woff2) format("woff2")',
-      { weight: '300' }
+    const medium = new FontFace(
+      'Inter',
+      'url(https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6zMZhrib2Bg-4.woff2) format("woff2")',
+      { weight: '500' }
     );
-    await Promise.all([bold.load(), light.load()]);
+    await Promise.all([bold.load(), medium.load()]);
     document.fonts.add(bold);
-    document.fonts.add(light);
+    document.fonts.add(medium);
   } catch {
     // fallback to system fonts
   }
 }
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number
-) {
+function drawShoeIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  const scale = size / 24;
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-  ctx.lineTo(x + r, y + h);
-  ctx.arcTo(x, y + h, x, y + h - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
-  ctx.closePath();
+  // Simple shoe silhouette
+  ctx.moveTo(4, 16);
+  ctx.lineTo(4, 20);
+  ctx.lineTo(20, 20);
+  ctx.lineTo(20, 16);
+  ctx.moveTo(4, 16);
+  ctx.bezierCurveTo(4, 12, 8, 8, 12, 8);
+  ctx.lineTo(16, 8);
+  ctx.bezierCurveTo(18, 8, 20, 10, 20, 12);
+  ctx.lineTo(20, 16);
+  ctx.stroke();
+  
+  // Lace lines
+  ctx.beginPath();
+  ctx.moveTo(10, 11);
+  ctx.lineTo(14, 11);
+  ctx.moveTo(10, 14);
+  ctx.lineTo(14, 14);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAppLogo(ctx: CanvasRenderingContext2D, x: number, y: number, height: number) {
+  ctx.save();
+  ctx.fillStyle = 'white';
+  ctx.font = `bold ${height}px Inter, sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('TRACE', x, y);
+  ctx.restore();
+}
+
+function formatShareDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
 }
 
 export async function generateShareImage(activity: Activity): Promise<string> {
@@ -131,28 +163,16 @@ export async function generateShareImage(activity: Activity): Promise<string> {
   // ── 1. Map background ───────────────────────────────────────────────────────
   ctx.drawImage(mapImg, 0, 0, CARD_W, CARD_H);
 
-  // ── 2. Cinematic vignette (darkens edges, especially bottom) ────────────────
-  // Radial edge vignette
-  const radVig = ctx.createRadialGradient(
-    CARD_W / 2, CARD_H * 0.42, CARD_H * 0.25,
-    CARD_W / 2, CARD_H * 0.42, CARD_H * 0.8
-  );
-  radVig.addColorStop(0, 'rgba(0,0,0,0)');
-  radVig.addColorStop(1, 'rgba(0,0,0,0.45)');
-  ctx.fillStyle = radVig;
-  ctx.fillRect(0, 0, CARD_W, CARD_H);
-
-  // Linear bottom fade (for glass panel readability)
-  const botFade = ctx.createLinearGradient(0, CARD_H * 0.45, 0, CARD_H);
-  botFade.addColorStop(0, 'rgba(0,0,0,0)');
-  botFade.addColorStop(0.55, 'rgba(0,0,0,0.3)');
-  botFade.addColorStop(1, 'rgba(0,0,0,0.72)');
-  ctx.fillStyle = botFade;
+  // ── 2. Linear Gradient Overlay (Better readability for text) ───────────────
+  const overlay = ctx.createLinearGradient(0, CARD_H * 0.3, 0, CARD_H);
+  overlay.addColorStop(0, 'rgba(0,0,0,0)');
+  overlay.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = overlay;
   ctx.fillRect(0, 0, CARD_W, CARD_H);
 
   // ── 3. Route polyline ───────────────────────────────────────────────────────
   const step = Math.max(1, Math.floor(pixelCoords.length / 400));
-  const pts = pixelCoords.filter((_, i) => i % step === 0);
+  const pts = pixelCoords.filter((i, idx) => idx % step === 0);
 
   const tracePath = () => {
     ctx.beginPath();
@@ -160,196 +180,68 @@ export async function generateShareImage(activity: Activity): Promise<string> {
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
   };
 
-  // Layer 1 — wide diffuse halo (canvas filter blur)
-  tracePath();
-  ctx.strokeStyle = 'rgba(252, 90, 20, 0.22)';
-  ctx.lineWidth = 32;
+  // Reddish-orange route with glow
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.filter = 'blur(10px)';
-  ctx.stroke();
-  ctx.filter = 'none';
-
-  // Layer 2 — tight glow
+  
+  // Outer glow
   tracePath();
-  ctx.strokeStyle = 'rgba(252, 76, 2, 0.55)';
-  ctx.lineWidth = 14;
-  ctx.shadowColor = '#fc4c02';
-  ctx.shadowBlur = 18;
+  ctx.strokeStyle = 'rgba(252, 76, 2, 0.3)';
+  ctx.lineWidth = 8;
   ctx.stroke();
-  ctx.shadowBlur = 0;
 
-  // Layer 3 — core line
+  // Core line
   tracePath();
-  ctx.strokeStyle = '#ff7040';
+  ctx.strokeStyle = '#fc4c02';
   ctx.lineWidth = 3.5;
-  ctx.shadowColor = '#ffb090';
-  ctx.shadowBlur = 6;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Start marker — green ring + dot
-  const s = pixelCoords[0];
-  ctx.beginPath();
-  ctx.arc(s.x, s.y, 7, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.shadowColor = '#34d399';
-  ctx.shadowBlur = 14;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.beginPath();
-  ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#34d399';
-  ctx.fill();
-
-  // End marker — orange ring + dot
-  const e = pixelCoords[pixelCoords.length - 1];
-  ctx.beginPath();
-  ctx.arc(e.x, e.y, 7, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.shadowColor = '#fc4c02';
-  ctx.shadowBlur = 14;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.beginPath();
-  ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#fc4c02';
-  ctx.fill();
-
-  // ── 4. Frosted glass stats panel ────────────────────────────────────────────
-  const PAD_H = 20;                         // horizontal margin
-  const panelX = PAD_H;
-  const panelW = CARD_W - PAD_H * 2;
-  const panelH = 198;
-  const panelY = CARD_H - panelH - 22;
-  const R = 26;
-
-  // Frosted glass: clip to panel, redraw blurred map, then dark tint
-  ctx.save();
-  roundRect(ctx, panelX, panelY, panelW, panelH, R);
-  ctx.clip();
-
-  ctx.filter = 'blur(28px) saturate(1.4)';
-  ctx.drawImage(mapImg, 0, 0, CARD_W, CARD_H);
-  ctx.filter = 'none';
-
-  // Dark-navy tinted overlay
-  ctx.fillStyle = 'rgba(6, 10, 24, 0.68)';
-  ctx.fillRect(panelX, panelY, panelW, panelH);
-
-  // Subtle top-edge shimmer inside panel
-  const shimmer = ctx.createLinearGradient(0, panelY, 0, panelY + 56);
-  shimmer.addColorStop(0, 'rgba(255,255,255,0.07)');
-  shimmer.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shimmer;
-  ctx.fillRect(panelX, panelY, panelW, panelH);
-
-  ctx.restore();
-
-  // Panel border
-  roundRect(ctx, panelX, panelY, panelW, panelH, R);
-  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
-  ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Orange accent line at top of panel
-  ctx.fillStyle = '#fc4c02';
-  const accentLen = 32;
-  ctx.fillRect(panelX + 24, panelY - 1, accentLen, 2.5);
+  // ── 4. Content ──────────────────────────────────────────────────────────────
+  const margin = 50;
+  const contentY = CARD_H - 240;
 
-  // ── Panel content ───────────────────────────────────────────────────────────
-  const cx0 = panelX + 24;   // left content start
-  const useOswald = document.fonts.check('700 48px Oswald');
+  // Icons at the top of content area
+  drawShoeIcon(ctx, margin, contentY - 40, 32);
+  drawAppLogo(ctx, CARD_W - margin, contentY - 14, 20);
 
-  // Activity name
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  // Title
+  ctx.fillStyle = 'white';
   ctx.textAlign = 'left';
-  ctx.font = useOswald
-    ? `700 20px Oswald`
-    : `bold 18px -apple-system, "Helvetica Neue", sans-serif`;
+  ctx.font = '700 36px Inter, sans-serif';
   ctx.fillText(
-    activity.name ?? format(new Date(activity.timestamp), 'EEEE, MMMM d'),
-    cx0,
-    panelY + 34
+    activity.name ?? 'Morning Run',
+    margin,
+    contentY + 30
   );
 
-  // Date
-  ctx.fillStyle = 'rgba(255,255,255,0.38)';
-  ctx.font = `12px -apple-system, "Helvetica Neue", sans-serif`;
-  ctx.fillText(
-    format(new Date(activity.timestamp), "h:mm a · MMM d, yyyy"),
-    cx0,
-    panelY + 52
-  );
+  // Stats Grid
+  const statsMarginTop = 60;
+  const colW = (CARD_W - margin * 2) / 2;
+  const subLabelFont = '500 16px Inter, sans-serif';
+  const valueFont = '700 32px Inter, sans-serif';
+  const unitFont = '700 20px Inter, sans-serif';
 
-  // Branding (top-right of panel)
-  const brandText = 'GPS FITNESS TRACKER';
-  ctx.font = `bold 9px -apple-system, "Helvetica Neue", sans-serif`;
-  const brandW = ctx.measureText(brandText).width;
-  const brandRX = panelX + panelW - 24;
-  const brandY = panelY + 34;
+  // Helper to draw a stat
+  const drawStat = (label: string, value: string, unit: string, x: number, y: number) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = subLabelFont;
+    ctx.fillText(label, x, y);
 
-  // Orange pulse dot
-  ctx.beginPath();
-  ctx.arc(brandRX - brandW - 7, brandY - 4, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#fc4c02';
-  ctx.shadowColor = '#fc4c02';
-  ctx.shadowBlur = 8;
-  ctx.fill();
-  ctx.shadowBlur = 0;
+    ctx.fillStyle = 'white';
+    ctx.font = valueFont;
+    const valueW = ctx.measureText(value).width;
+    ctx.fillText(value, x, y + 40);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.textAlign = 'right';
-  ctx.fillText(brandText, brandRX, brandY);
+    ctx.font = unitFont;
+    ctx.fillText(unit, x + valueW + 6, y + 40);
+  };
 
-  // Horizontal rule
-  const ruleY = panelY + 68;
-  const ruleGrad = ctx.createLinearGradient(panelX, 0, panelX + panelW, 0);
-  ruleGrad.addColorStop(0, 'rgba(255,255,255,0)');
-  ruleGrad.addColorStop(0.15, 'rgba(255,255,255,0.1)');
-  ruleGrad.addColorStop(0.85, 'rgba(255,255,255,0.1)');
-  ruleGrad.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = ruleGrad;
-  ctx.fillRect(panelX, ruleY, panelW, 1);
+  // Row 1
+  drawStat('Distance', activity.distance.toFixed(2), 'km', margin, contentY + statsMarginTop + 30);
+  drawStat('Time', formatShareDuration(activity.duration), '', margin + colW, contentY + statsMarginTop + 30);
 
-  // ── Stats 4-column grid ─────────────────────────────────────────────────────
-  const stats = [
-    { value: activity.distance.toFixed(2), unit: 'KM',       accent: '#60a5fa' },
-    { value: formatPace(activity.distance, activity.duration), unit: '/KM PACE', accent: '#c084fc' },
-    { value: formatDuration(activity.duration),               unit: 'TIME',     accent: '#94a3b8' },
-    { value: `${Math.round(activity.elevationGain)}`,         unit: 'M ELEV',   accent: '#fbbf24' },
-  ];
-
-  const colW = panelW / 4;
-  const numY = ruleY + 56;
-  const unitY = ruleY + 76;
-
-  stats.forEach((stat, i) => {
-    const colCx = panelX + colW * i + colW / 2;
-
-    // Vertical divider (skip first)
-    if (i > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(panelX + colW * i, ruleY + 16);
-      ctx.lineTo(panelX + colW * i, ruleY + 88);
-      ctx.stroke();
-    }
-
-    // Number
-    ctx.fillStyle = 'rgba(255,255,255,0.96)';
-    ctx.textAlign = 'center';
-    ctx.font = useOswald
-      ? `700 34px Oswald`
-      : `bold 28px "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillText(stat.value, colCx, numY);
-
-    // Unit label
-    ctx.fillStyle = stat.accent;
-    ctx.font = `bold 9px -apple-system, "Helvetica Neue", sans-serif`;
-    ctx.fillText(stat.unit, colCx, unitY);
-  });
+  // Row 2
+  drawStat('Pace', formatPace(activity.distance, activity.duration), '/km', margin, contentY + statsMarginTop + 110);
 
   return canvas.toDataURL('image/png');
 }

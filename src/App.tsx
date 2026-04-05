@@ -13,7 +13,7 @@ export default function App() {
 
   // Load activities from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('strava_clone_activities');
+    const saved = localStorage.getItem('trace_activities');
     if (saved) {
       try {
         setActivities(JSON.parse(saved));
@@ -26,7 +26,7 @@ export default function App() {
   const handleSaveActivity = (activity: Activity) => {
     const newActivities = [activity, ...activities];
     setActivities(newActivities);
-    localStorage.setItem('strava_clone_activities', JSON.stringify(newActivities));
+    localStorage.setItem('trace_activities', JSON.stringify(newActivities));
     setActiveTab('history');
   };
 
@@ -38,7 +38,7 @@ export default function App() {
   const handleRenameActivity = (id: string, name: string) => {
     const updated = activities.map(a => a.id === id ? { ...a, name } : a);
     setActivities(updated);
-    localStorage.setItem('strava_clone_activities', JSON.stringify(updated));
+    localStorage.setItem('trace_activities', JSON.stringify(updated));
   };
 
   return (
