@@ -67,7 +67,7 @@ export default function App() {
   const initial = (user.displayName?.[0] ?? user.email?.[0] ?? '?').toUpperCase();
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0a] text-white overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#0a0a0a] text-white overflow-hidden">
       {/* Main content */}
       <div className="flex-1 relative overflow-hidden pb-24">
         {activeTab === 'record' && (

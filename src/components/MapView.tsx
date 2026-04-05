@@ -113,10 +113,11 @@ export default function MapView({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map          = useRef<maplibregl.Map | null>(null);
   const marker       = useRef<maplibregl.Marker | null>(null);
-  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
+  const [mapStyle,  setMapStyle]  = useState<MapStyle>('dark');
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMenu,  setShowMenu]  = useState(false);
   const [is3D,      setIs3D]      = useState(false);
+  const [mapError,  setMapError]  = useState<string | null>(null);
 
   // Keep a ref to latest coordinates so style-switch handler can access them
   const coordinatesRef = useRef(coordinates);
@@ -130,15 +131,20 @@ export default function MapView({
       ? [currentLocation.lng, currentLocation.lat]
       : [-122.4194, 37.7749];
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: TILE_LAYERS[mapStyle].style,
-      center: initialCenter,
-      zoom,
-      pitch,
-      bearing,
-      attributionControl: false,
-    });
+    try {
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: TILE_LAYERS[mapStyle].style,
+        center: initialCenter,
+        zoom,
+        pitch,
+        bearing,
+        attributionControl: false,
+      });
+    } catch (e) {
+      setMapError('Map failed to load. WebGL may not be supported on this device.');
+      return;
+    }
 
     map.current.addControl(new maplibregl.AttributionControl({ compact: true }));
 
@@ -309,6 +315,12 @@ export default function MapView({
       </div>
 
       <div ref={mapContainer} className="w-full h-full box-border" />
+
+      {mapError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0e0e0e] text-center px-6">
+          <p className="text-[#555] text-sm leading-relaxed">{mapError}</p>
+        </div>
+      )}
     </div>
   );
 }
