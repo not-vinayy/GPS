@@ -178,7 +178,7 @@ export default function MapView({
 
     map.current.setStyle(TILE_LAYERS[mapStyle].style);
 
-    map.current.once('style.load', () => {
+    map.current.once('idle', () => {
       if (!map.current) return;
       addRouteLayers(map.current, coordinatesRef.current.map(c => [c.lng, c.lat]));
     });
@@ -188,17 +188,27 @@ export default function MapView({
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates.map(c => [c.lng, c.lat]),
-        },
-      });
+    const geojsonCoords = coordinates.map(c => [c.lng, c.lat]) as [number, number][];
+
+    // If a style switch wiped the source (race condition on satellite's inline style),
+    // re-add everything rather than silently skipping.
+    if (!map.current.getSource('route')) {
+      if (map.current.isStyleLoaded()) {
+        addRouteLayers(map.current, geojsonCoords);
+      }
+      // Either way, bail — the source isn't ready yet; the style.load callback will add it.
+      return;
     }
+
+    const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
+    source.setData({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: geojsonCoords,
+      },
+    });
 
     if (currentLocation && marker.current) {
       marker.current.setLngLat([currentLocation.lng, currentLocation.lat]);

@@ -6,13 +6,16 @@ import Tracker from './components/Tracker';
 import ActivityHistory from './components/ActivityHistory';
 import ReplayPlayer from './components/ReplayPlayer';
 import LoginScreen from './components/LoginScreen';
+import ProfileScreen from './components/ProfileScreen';
 import { Activity } from './types';
 import { Activity as ActivityIcon, History, Loader } from 'lucide-react';
 import { generateDemoActivity } from './utils/demo';
 import { logger } from './utils/logger';
 
+type Tab = 'record' | 'history' | 'profile';
+
 export default function App() {
-  const [activeTab,         setActiveTab]         = useState<'record' | 'history'>('record');
+  const [activeTab,         setActiveTab]         = useState<Tab>('record');
   const [replayingActivity, setReplayingActivity] = useState<Activity | null>(null);
   const [user,              setUser]              = useState<User | null | 'loading'>('loading');
 
@@ -61,15 +64,16 @@ export default function App() {
     return <LoginScreen />;
   }
 
-  const initial = (user.email?.[0] ?? user.displayName?.[0] ?? '?').toUpperCase();
+  const initial = (user.displayName?.[0] ?? user.email?.[0] ?? '?').toUpperCase();
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0a] text-white overflow-hidden">
-      {/* Main content — padded bottom so content never hides behind nav */}
+      {/* Main content */}
       <div className="flex-1 relative overflow-hidden pb-24">
-        {activeTab === 'record' ? (
+        {activeTab === 'record' && (
           <Tracker onSaveActivity={handleSaveActivity} />
-        ) : (
+        )}
+        {activeTab === 'history' && (
           <ActivityHistory
             activities={activities}
             onReplay={activity => setReplayingActivity(activity)}
@@ -77,6 +81,13 @@ export default function App() {
             onRename={renameActivity}
             onDelete={deleteActivity}
             syncing={syncing}
+          />
+        )}
+        {activeTab === 'profile' && (
+          <ProfileScreen
+            user={user}
+            activities={activities}
+            onSignOut={handleSignOut}
           />
         )}
 
@@ -115,16 +126,27 @@ export default function App() {
             History
           </button>
 
-          {/* Avatar / sign-out */}
+          {/* Avatar → Profile tab */}
           <button
-            onClick={handleSignOut}
-            title={`Sign out (${user.email ?? user.displayName ?? 'user'})`}
-            className="flex items-center justify-center px-3 py-2.5 rounded-full text-[#555] hover:text-rose-400 transition-colors group"
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center justify-center px-3 py-2.5 rounded-full transition-all duration-200 ${
+              activeTab === 'profile'
+                ? 'bg-[#ff4500] shadow-[0_0_20px_rgba(255,69,0,0.35)]'
+                : 'hover:bg-white/[0.04]'
+            }`}
           >
             {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full ring-1 ring-white/10 group-hover:ring-rose-500/40 transition-all" />
+              <img
+                src={user.photoURL}
+                alt=""
+                className={`w-6 h-6 rounded-full transition-all ${
+                  activeTab === 'profile' ? 'ring-2 ring-white/40' : 'ring-1 ring-white/10'
+                }`}
+              />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-[#ff4500] text-white text-[10px] font-bold flex items-center justify-center">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+                activeTab === 'profile' ? 'bg-white text-[#ff4500]' : 'bg-[#ff4500] text-white'
+              }`}>
                 {initial}
               </div>
             )}
