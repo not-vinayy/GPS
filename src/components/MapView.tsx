@@ -44,11 +44,11 @@ const TILE_LAYERS = {
 
 type MapStyle = keyof typeof TILE_LAYERS;
 
-const STYLE_ICONS: Record<MapStyle, string> = {
-  dark:      '🌑',
-  light:     '☀️',
-  streets:   '🗺',
-  satellite: '🛰',
+const STYLE_DOTS: Record<MapStyle, string> = {
+  dark:      '#1a1a2e',
+  light:     '#e8e8e0',
+  streets:   '#d4a853',
+  satellite: '#2d5a1b',
 };
 
 interface MapViewProps {
@@ -286,7 +286,7 @@ export default function MapView({
                       : 'text-[#777] hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-base leading-none">{STYLE_ICONS[key]}</span>
+                  <span className="w-3 h-3 rounded-sm shrink-0" style={{ background: STYLE_DOTS[key] }} />
                   {layer.name}
                   {active && (
                     <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff4500] shrink-0" />

@@ -11,6 +11,8 @@ interface ReplayPlayerProps {
 
 export default function ReplayPlayer({ activity, onClose }: ReplayPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(10);
+  const SPEEDS = [1, 2, 5, 10, 20, 50];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentLocation, setCurrentLocation] = useState<Coordinate | null>(activity.coordinates[0] || null);
   const [drawnCoordinates, setDrawnCoordinates] = useState<Coordinate[]>([]);
@@ -49,7 +51,7 @@ export default function ReplayPlayer({ activity, onClose }: ReplayPlayerProps) {
       const deltaTime = time - lastFrameTimeRef.current;
       lastFrameTimeRef.current = time;
 
-      const speedMultiplier = 10;
+      const speedMultiplier = speed;
 
       if (currentIndex < activity.coordinates.length - 1) {
         const p1 = activity.coordinates[currentIndex];
@@ -121,7 +123,7 @@ export default function ReplayPlayer({ activity, onClose }: ReplayPlayerProps) {
 
     animationRef.current = requestAnimationFrame(animate);
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-  }, [isPlaying, currentIndex, activity]);
+  }, [isPlaying, currentIndex, activity, speed]);
 
   const togglePlay = () => {
     if (currentIndex >= activity.coordinates.length - 1) {
@@ -265,8 +267,13 @@ export default function ReplayPlayer({ activity, onClose }: ReplayPlayerProps) {
             }
           </button>
 
-          {/* Spacer to keep play button centered */}
-          <div className="w-11 h-11" />
+          {/* Speed cycle button */}
+          <button
+            onClick={() => setSpeed(s => SPEEDS[(SPEEDS.indexOf(s) + 1) % SPEEDS.length])}
+            className="w-11 h-11 bg-[#1a1a1a] rounded-full flex items-center justify-center hover:bg-[#222] transition-colors border border-white/[0.06]"
+          >
+            <span className="font-barlow text-sm font-bold text-[#ff4500]">{speed}×</span>
+          </button>
         </div>
       </div>
     </div>
