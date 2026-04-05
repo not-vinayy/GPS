@@ -1,0 +1,115 @@
+<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Clip every layer to the rounded-square icon shape -->
+    <clipPath id="icon-clip">
+      <rect width="512" height="512" rx="108"/>
+    </clipPath>
+
+    <!-- Deep navy background, lighter in the upper-left corner -->
+    <radialGradient id="bg" cx="35%" cy="28%" r="85%">
+      <stop offset="0%" stop-color="#1c2e50"/>
+      <stop offset="100%" stop-color="#060c18"/>
+    </radialGradient>
+
+    <!-- Subtle orange atmosphere behind the end-marker -->
+    <radialGradient id="end-halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#fc4c02" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#fc4c02" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Route: fades from near-invisible white at the start to vivid orange at the end -->
+    <linearGradient id="route-grad" x1="0%" y1="100%" x2="80%" y2="0%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="50%"  stop-color="#fc4c02" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#fc4c02"/>
+    </linearGradient>
+
+    <!-- Soft glow spread under the route -->
+    <filter id="route-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Stronger glow for the active end-marker -->
+    <filter id="dot-glow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Dot-grid pattern that evokes a map -->
+    <pattern id="map-dots" x="0" y="0" width="44" height="44" patternUnits="userSpaceOnUse">
+      <circle cx="22" cy="22" r="1.4" fill="rgba(255,255,255,0.055)"/>
+    </pattern>
+  </defs>
+
+  <!-- ── Background ─────────────────────────────────────────────────────── -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <g clip-path="url(#icon-clip)">
+    <!-- Map-dot grid -->
+    <rect width="512" height="512" fill="url(#map-dots)"/>
+
+    <!-- ── Route: outer glow pass ──────────────────────────────────────── -->
+    <!--
+      The path traces a city-block running route:
+        1. Up the left column  (120,420 → 120,295)
+        2. Right across the top cross-street (→ 200,255)
+        3. Down the middle column  (→ 240,355)
+        4. Right across the bottom cross-street (→ 370,395)
+        5. Up the right column  (→ 410,175)
+        6. Left across the top  (→ 290,135)   ← end / GPS cursor
+    -->
+    <path
+      d="M 120 420
+         L 120 295 Q 120 255 160 255
+         L 200 255 Q 240 255 240 295
+         L 240 355 Q 240 395 280 395
+         L 370 395 Q 410 395 410 355
+         L 410 175 Q 410 135 370 135
+         L 290 135"
+      stroke="#fc4c02"
+      stroke-width="36"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.16"
+    />
+
+    <!-- Route: crisp core pass with gradient -->
+    <path
+      d="M 120 420
+         L 120 295 Q 120 255 160 255
+         L 200 255 Q 240 255 240 295
+         L 240 355 Q 240 395 280 395
+         L 370 395 Q 410 395 410 355
+         L 410 175 Q 410 135 370 135
+         L 290 135"
+      stroke="url(#route-grad)"
+      stroke-width="14"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      filter="url(#route-glow)"
+    />
+
+    <!-- ── End-point (active GPS cursor) ──────────────────────────────── -->
+    <!-- Outer pulse halo -->
+    <circle cx="290" cy="135" r="56" fill="url(#end-halo)"/>
+    <!-- Mid ring -->
+    <circle cx="290" cy="135" r="32" fill="rgba(252,76,2,0.20)"/>
+    <!-- Glowing filled circle -->
+    <circle cx="290" cy="135" r="20" fill="#fc4c02" filter="url(#dot-glow)"/>
+    <!-- Solid circle on top of glow (keeps colour vivid) -->
+    <circle cx="290" cy="135" r="20" fill="#fc4c02"/>
+    <!-- White inner dot -->
+    <circle cx="290" cy="135" r="8"  fill="white"/>
+
+    <!-- ── Start-point ─────────────────────────────────────────────────── -->
+    <circle cx="120" cy="420" r="14" fill="rgba(255,255,255,0.80)"/>
+    <circle cx="120" cy="420" r="6"  fill="#060c18"/>
+  </g>
+</svg>

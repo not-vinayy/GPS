@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,10 +16,12 @@ export const app  = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Persistent cache = Firestore works offline (IndexedDB-backed).
-// Activities recorded on a run with no signal sync automatically when back online.
+// persistentMultipleTabManager uses SharedWorker which is unsupported in Android
+// WebView — it crashes before React mounts. On native, single-tab persistence is
+// all we need anyway (one WebView = one tab).
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
+  localCache: persistentLocalCache(),
+  ...(Capacitor.isNativePlatform() && {
+    experimentalForceLongPolling: true,
   }),
 });
