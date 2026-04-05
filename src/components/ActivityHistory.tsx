@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Activity, Coordinate } from '../types';
 import { formatDuration, formatPace } from '../utils/geo';
 import { generateShareImage, shareOrDownload } from '../utils/share';
-import { Play, Pencil, Check, Trophy, Zap, Share2, Download, X, MapPin, Terminal } from 'lucide-react';
+import { Play, Pencil, Check, Trophy, Zap, Share2, Download, X, MapPin, Terminal, Trash2, CloudUpload } from 'lucide-react';
 import LogsModal from './LogsModal';
 
 interface ActivityHistoryProps {
@@ -11,6 +11,8 @@ interface ActivityHistoryProps {
   onReplay: (activity: Activity) => void;
   onAddDemo: () => void;
   onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  syncing: boolean;
 }
 
 function RouteThumbnail({ coordinates }: { coordinates: Coordinate[] }) {
@@ -165,7 +167,7 @@ function ShareModal({ activity, onClose }: ShareModalProps) {
   );
 }
 
-export default function ActivityHistory({ activities, onReplay, onAddDemo, onRename }: ActivityHistoryProps) {
+export default function ActivityHistory({ activities, onReplay, onAddDemo, onRename, onDelete, syncing }: ActivityHistoryProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [sharingActivity, setSharingActivity] = useState<Activity | null>(null);
@@ -199,7 +201,10 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4">
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">Your Traces</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-800">Your Traces</h2>
+          {syncing && <CloudUpload className="w-4 h-4 text-blue-400 animate-pulse" title="Syncing…" />}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowLogs(true)}
@@ -323,6 +328,13 @@ export default function ActivityHistory({ activities, onReplay, onAddDemo, onRen
                   >
                     <Share2 className="w-4 h-4 mb-1" />
                     <span className="text-[9px] font-semibold uppercase tracking-wider">Share</span>
+                  </button>
+                  <button
+                    onClick={() => { if (confirm('Delete this activity?')) onDelete(activity.id); }}
+                    className="flex flex-col items-center justify-center px-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-2xl transition-colors shadow-sm shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4 mb-1" />
+                    <span className="text-[9px] font-semibold uppercase tracking-wider">Del</span>
                   </button>
                 </div>
               </div>
