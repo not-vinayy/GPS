@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { Coordinate } from '../types';
-import { Layers } from 'lucide-react';
+import { calculateBearing } from '../utils/geo';
+import { Layers, Box } from 'lucide-react';
 
 const TILE_LAYERS = {
   dark: {
@@ -25,8 +26,8 @@ const TILE_LAYERS = {
           type: 'raster',
           tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
           tileSize: 256,
-          attribution: 'Tiles &copy; Esri'
-        }
+          attribution: 'Tiles &copy; Esri',
+        },
       },
       layers: [
         {
@@ -34,14 +35,21 @@ const TILE_LAYERS = {
           type: 'raster',
           source: 'raster-tiles',
           minzoom: 0,
-          maxzoom: 19
-        }
-      ]
-    } as maplibregl.StyleSpecification
-  }
+          maxzoom: 19,
+        },
+      ],
+    } as maplibregl.StyleSpecification,
+  },
 };
 
 type MapStyle = keyof typeof TILE_LAYERS;
+
+const STYLE_ICONS: Record<MapStyle, string> = {
+  dark:      '🌑',
+  light:     '☀️',
+  streets:   '🗺',
+  satellite: '🛰',
+};
 
 interface MapViewProps {
   coordinates: Coordinate[];
@@ -52,24 +60,73 @@ interface MapViewProps {
   zoom?: number;
 }
 
-export default function MapView({ 
-  coordinates, 
-  currentLocation, 
-  isReplaying = false, 
-  bearing = 0, 
-  pitch = 0, 
-  zoom = 15 
+function addRouteLayers(map: maplibregl.Map, coords: [number, number][]) {
+  if (!map.getSource('route')) {
+    map.addSource('route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: coords },
+      },
+    });
+  }
+
+  if (!map.getLayer('route-glow')) {
+    map.addLayer({
+      id: 'route-glow',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#ff4500',
+        'line-width': 14,
+        'line-opacity': 0.25,
+        'line-blur': 8,
+      },
+    });
+  }
+
+  if (!map.getLayer('route')) {
+    map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#ff4500',
+        'line-width': 5,
+        'line-opacity': 1,
+      },
+    });
+  }
+}
+
+export default function MapView({
+  coordinates,
+  currentLocation,
+  isReplaying = false,
+  bearing = 0,
+  pitch = 0,
+  zoom = 15,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
-  const marker = useRef<maplibregl.Marker | null>(null);
+  const map          = useRef<maplibregl.Map | null>(null);
+  const marker       = useRef<maplibregl.Marker | null>(null);
   const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [showMenu,  setShowMenu]  = useState(false);
+  const [is3D,      setIs3D]      = useState(false);
 
+  // Keep a ref to latest coordinates so style-switch handler can access them
+  const coordinatesRef = useRef(coordinates);
+  useEffect(() => { coordinatesRef.current = coordinates; }, [coordinates]);
+
+  // ── Initial map setup ────────────────────────────────────────────────────
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
 
-    const initialCenter: [number, number] = currentLocation 
+    const initialCenter: [number, number] = currentLocation
       ? [currentLocation.lng, currentLocation.lat]
       : [-122.4194, 37.7749];
 
@@ -77,9 +134,9 @@ export default function MapView({
       container: mapContainer.current,
       style: TILE_LAYERS[mapStyle].style,
       center: initialCenter,
-      zoom: zoom,
-      pitch: pitch,
-      bearing: bearing,
+      zoom,
+      pitch,
+      bearing,
       attributionControl: false,
     });
 
@@ -88,52 +145,19 @@ export default function MapView({
     map.current.on('load', () => {
       if (!map.current) return;
 
-      map.current.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: [],
-          },
-        },
-      });
+      addRouteLayers(map.current, coordinatesRef.current.map(c => [c.lng, c.lat]));
 
-      map.current.addLayer({
-        id: 'route-glow',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#fc4c02',
-          'line-width': 12,
-          'line-opacity': 0.3,
-          'line-blur': 8,
-        },
-      });
-
-      map.current.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#fc4c02',
-          'line-width': 5,
-          'line-opacity': 1,
-        },
-      });
-
+      // Location dot
       const el = document.createElement('div');
-      // Material marker: a soft blue dot with a pulsing semi-transparent ring
-      el.className = `w-4 h-4 bg-blue-400 rounded-full shadow-[0_0_0_4px_rgba(96,165,250,0.3)] ${!isReplaying ? 'animate-pulse' : ''}`;
+      el.style.cssText = `
+        width: 14px; height: 14px;
+        background: #4fc3f7;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(79,195,247,0.25), 0 2px 6px rgba(0,0,0,0.4);
+      `;
+      if (!isReplaying) {
+        el.style.animation = 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite';
+      }
 
       marker.current = new maplibregl.Marker({ element: el })
         .setLngLat(initialCenter)
@@ -148,67 +172,21 @@ export default function MapView({
     };
   }, []);
 
-  // Handle style change
-  useEffect(() => {
-    if (map.current && map.current.isStyleLoaded()) {
-      map.current.setStyle(TILE_LAYERS[mapStyle].style);
-      
-      // Re-add source and layer after style loads
-      map.current.once('styledata', () => {
-        if (!map.current) return;
-        if (!map.current.getSource('route')) {
-          map.current.addSource('route', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: coordinates.map(c => [c.lng, c.lat]),
-              },
-            },
-          });
-
-          map.current.addLayer({
-            id: 'route-glow',
-            type: 'line',
-            source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-            },
-            paint: {
-              'line-color': '#fc4c02',
-              'line-width': 12,
-              'line-opacity': 0.3,
-              'line-blur': 8,
-            },
-          });
-
-          map.current.addLayer({
-            id: 'route',
-            type: 'line',
-            source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-            },
-            paint: {
-              'line-color': '#fc4c02',
-              'line-width': 5,
-              'line-opacity': 1,
-            },
-          });
-        }
-      });
-    }
-  }, [mapStyle]);
-
-  // Update route and marker
+  // ── Style switching — use style.load to reliably re-add layers ───────────
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    const geojsonCoords = coordinates.map((c) => [c.lng, c.lat]);
+    map.current.setStyle(TILE_LAYERS[mapStyle].style);
+
+    map.current.once('style.load', () => {
+      if (!map.current) return;
+      addRouteLayers(map.current, coordinatesRef.current.map(c => [c.lng, c.lat]));
+    });
+  }, [mapStyle]);
+
+  // ── Update route + marker position ──────────────────────────────────────
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
 
     const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
     if (source) {
@@ -217,53 +195,109 @@ export default function MapView({
         properties: {},
         geometry: {
           type: 'LineString',
-          coordinates: geojsonCoords,
+          coordinates: coordinates.map(c => [c.lng, c.lat]),
         },
       });
     }
 
     if (currentLocation && marker.current) {
       marker.current.setLngLat([currentLocation.lng, currentLocation.lat]);
-      
+
       if (isReplaying) {
         map.current.jumpTo({
           center: [currentLocation.lng, currentLocation.lat],
-          bearing: bearing,
-          pitch: pitch,
-          zoom: zoom
+          bearing,
+          pitch,
+          zoom,
+        });
+      } else if (is3D && coordinates.length >= 2) {
+        // Follow direction of travel in 3D
+        const prev = coordinates[coordinates.length - 2];
+        const curr = coordinates[coordinates.length - 1];
+        const travelBearing = calculateBearing(prev, curr);
+        map.current.easeTo({
+          center: [currentLocation.lng, currentLocation.lat],
+          bearing: travelBearing,
+          pitch: 60,
+          zoom: 17.5,
+          duration: 1000,
         });
       } else {
         map.current.easeTo({
           center: [currentLocation.lng, currentLocation.lat],
-          duration: 1000,
+          bearing: 0,
+          pitch: 0,
+          zoom: 15,
+          duration: 800,
         });
       }
     }
-  }, [coordinates, currentLocation, isReplaying, bearing, pitch, zoom, mapLoaded]);
+  }, [coordinates, currentLocation, isReplaying, bearing, pitch, zoom, mapLoaded, is3D]);
+
+  const handleStyleSelect = (key: MapStyle) => {
+    setMapStyle(key);
+    setShowMenu(false);
+  };
 
   return (
     <div className="w-full h-full z-0 relative">
-      {/* Layer Switcher */}
-      <div className={`absolute ${isReplaying ? 'top-4' : 'top-4'} right-4 z-[1000] bg-white/90 backdrop-blur-md border border-slate-200 p-1 flex flex-col shadow-md rounded-2xl overflow-hidden`}>
-        <div className="p-2 bg-slate-50 flex justify-center items-center border-b border-slate-100">
-          <Layers className="w-4 h-4 text-slate-500" />
-        </div>
-        <div className="flex flex-col">
-          {Object.entries(TILE_LAYERS).map(([key, layer], index) => (
-            <button
-              key={key}
-              onClick={() => setMapStyle(key as MapStyle)}
-              className={`px-3 py-2 text-xs font-medium transition-colors text-left ${
-                mapStyle === key 
-                  ? 'bg-blue-50 text-blue-700' 
-                  : 'bg-transparent text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {layer.name}
-            </button>
-          ))}
-        </div>
+      {/* Style picker */}
+      <div className={`absolute z-[1000] ${isReplaying ? 'top-20' : 'top-4'} right-4`}>
+        {/* Toggle button */}
+        <button
+          onClick={() => setShowMenu(s => !s)}
+          className="w-10 h-10 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center border border-white/10 hover:border-white/25 transition-all shadow-lg"
+          aria-label="Map style"
+        >
+          <Layers className="w-4 h-4 text-white/80" />
+        </button>
+
+        {/* Dropdown */}
+        {showMenu && (
+          <div className="absolute top-12 right-0 bg-[#111]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl w-[130px]">
+            {/* 3D toggle — only in live tracking, not replay */}
+            {!isReplaying && (
+              <>
+                <button
+                  onClick={() => setIs3D(v => !v)}
+                  className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-left transition-colors ${
+                    is3D
+                      ? 'text-[#ff4500] bg-[#ff4500]/10'
+                      : 'text-[#777] hover:text-white hover:bg-white/[0.05]'
+                  }`}
+                >
+                  <Box className="w-4 h-4 shrink-0" />
+                  3D Follow
+                  {is3D && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff4500] shrink-0" />}
+                </button>
+                <div className="h-px bg-white/[0.06] mx-3" />
+              </>
+            )}
+
+            {(Object.entries(TILE_LAYERS) as [MapStyle, { name: string }][]).map(([key, layer]) => {
+              const active = mapStyle === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleStyleSelect(key)}
+                  className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-left transition-colors ${
+                    active
+                      ? 'text-[#ff4500] bg-[#ff4500]/10'
+                      : 'text-[#777] hover:text-white hover:bg-white/[0.05]'
+                  }`}
+                >
+                  <span className="text-base leading-none">{STYLE_ICONS[key]}</span>
+                  {layer.name}
+                  {active && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff4500] shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
+
       <div ref={mapContainer} className="w-full h-full box-border" />
     </div>
   );
