@@ -77,7 +77,7 @@ jobs:
 
       # Generate adaptive icon PNGs (mipmap-*) from assets/icon-only.svg + icon-foreground/background
       - name: Generate Android icons
-        run: npx @capacitor/assets generate --android --androidPath android --assetPath assets
+        run: npx @capacitor/assets generate --android
 
       # Copy web build into the native project & install plugin native deps
       - name: Sync Capacitor
