@@ -12,7 +12,7 @@ const config: CapacitorConfig = {
         'Trace needs your location to record your runs.',
     },
     FirebaseAuthentication: {
-      skipNativeAuth: false,
+      skipNativeAuth: true,
       providers: ['google.com'],
     },
   },
