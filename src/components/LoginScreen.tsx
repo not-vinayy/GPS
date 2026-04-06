@@ -6,7 +6,6 @@ import {
   type AuthError,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
-import { Capacitor } from '@capacitor/core';
 import { logger } from '../utils/logger';
 
 // Simple Google 'G' logo as inline SVG
@@ -79,8 +78,6 @@ export default function LoginScreen() {
     }
   };
 
-  // Google Sign-In popup doesn't work reliably in Capacitor WebView
-  const isNative = Capacitor.isNativePlatform();
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-slate-950 px-6">
@@ -146,25 +143,21 @@ export default function LoginScreen() {
         </form>
 
         {/* Divider */}
-        {!isNative && (
-          <>
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-slate-700" />
-              <span className="text-slate-500 text-xs">or</span>
-              <div className="flex-1 h-px bg-slate-700" />
-            </div>
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-slate-700" />
+          <span className="text-slate-500 text-xs">or</span>
+          <div className="flex-1 h-px bg-slate-700" />
+        </div>
 
-            {/* Google Sign-In (web only) */}
-            <button
-              onClick={handleGoogle}
-              disabled={loading !== null}
-              className="w-full flex items-center justify-center gap-3 py-3 bg-white hover:bg-slate-100 text-slate-800 font-semibold rounded-2xl transition-colors disabled:opacity-50 text-sm"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
-          </>
-        )}
+        {/* Google Sign-In */}
+        <button
+          onClick={handleGoogle}
+          disabled={loading !== null}
+          className="w-full flex items-center justify-center gap-3 py-3 bg-white hover:bg-slate-100 text-slate-800 font-semibold rounded-2xl transition-colors disabled:opacity-50 text-sm"
+        >
+          <GoogleIcon />
+          Continue with Google
+        </button>
       </div>
 
       <p className="text-slate-600 text-xs mt-8 text-center max-w-xs">
