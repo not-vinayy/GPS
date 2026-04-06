@@ -11,6 +11,10 @@ const config: CapacitorConfig = {
       iosLocationWhenInUseUsageDescription:
         'Trace needs your location to record your runs.',
     },
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com'],
+    },
   },
 };
 
