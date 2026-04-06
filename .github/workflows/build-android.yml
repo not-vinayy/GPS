@@ -71,6 +71,11 @@ jobs:
             echo "✅ Android platform already present."
           fi
 
+      # Add play-services-auth required by @capacitor-firebase/authentication
+      - name: Patch build.gradle for Google Sign-In
+        run: |
+          sed -i "s|implementation project(':capacitor-cordova-android-plugins')|implementation project(':capacitor-cordova-android-plugins')\n    implementation 'com.google.android.gms:play-services-auth:21.3.0'|" android/app/build.gradle
+
       # Inject GPS + foreground-service permissions into the manifest
       - name: Patch AndroidManifest.xml
         run: bash scripts/patch-manifest.sh
