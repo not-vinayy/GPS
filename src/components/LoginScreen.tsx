@@ -83,9 +83,9 @@ export default function LoginScreen() {
       }
       logger.info('app', 'Signed in via Google');
     } catch (err) {
-      const msg = authMessage(err as AuthError);
       const code = (err as AuthError).code;
-      setError(msg || (err as Error).message || 'Unknown error');
+      const raw = (err as Error).message;
+      setError(`[${code ?? 'no-code'}] ${raw}`);
       logger.warn('app', 'Google auth failed', { code, err });
     } finally {
       setLoading(null);
