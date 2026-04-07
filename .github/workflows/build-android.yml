@@ -92,6 +92,10 @@ jobs:
           if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
             mkdir -p ~/.android
             echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+            echo "✅ Keystore written, SHA-1:"
+            keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android 2>/dev/null | grep SHA1
+          else
+            echo "⚠️ DEBUG_KEYSTORE_BASE64 secret not set"
           fi
 
       # Inject google-services.json so Google Sign-In works in the built APK
