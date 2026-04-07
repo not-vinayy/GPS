@@ -73,7 +73,9 @@ export default function LoginScreen() {
     try {
       if (Capacitor.isNativePlatform()) {
         // Native flow: uses system Google account picker, no browser redirect
-        const result = await FirebaseAuthentication.signInWithGoogle();
+        const result = await FirebaseAuthentication.signInWithGoogle({
+          clientId: '311057311864-v5f0ii4j4sdvlcdq37polf4grrt2cuv6.apps.googleusercontent.com',
+        });
         const idToken = result.credential?.idToken;
         if (!idToken) throw new Error('No ID token returned from Google Sign-In');
         const credential = GoogleAuthProvider.credential(idToken);
