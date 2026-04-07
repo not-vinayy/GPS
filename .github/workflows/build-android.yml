@@ -105,6 +105,10 @@ jobs:
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
             echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "✅ google-services.json written, certificate hashes:"
+            grep certificate_hash android/app/google-services.json
+          else
+            echo "⚠️ GOOGLE_SERVICES_JSON secret not set"
           fi
 
       # Copy web build into the native project & install plugin native deps
