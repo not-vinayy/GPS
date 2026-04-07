@@ -72,14 +72,21 @@ export default function LoginScreen() {
     setLoading('google');
     try {
       if (Capacitor.isNativePlatform()) {
-        // Native flow: uses system Google account picker, no browser redirect
+        logger.info('app', 'Google Sign-In: starting native flow');
         const result = await FirebaseAuthentication.signInWithGoogle({
           clientId: '311057311864-v5f0ii4j4sdvlcdq37polf4grrt2cuv6.apps.googleusercontent.com',
         });
+        logger.info('app', 'Google Sign-In: got result', {
+          hasCredential: !!result.credential,
+          hasIdToken: !!result.credential?.idToken,
+          hasUser: !!result.user,
+          userId: result.user?.uid ?? 'none',
+        });
         const idToken = result.credential?.idToken;
         if (!idToken) throw new Error('No ID token returned from Google Sign-In');
-        const credential = GoogleAuthProvider.credential(idToken);
-        await signInWithCredential(auth, credential);
+        logger.info('app', 'Google Sign-In: calling signInWithCredential');
+        const userCred = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+        logger.info('app', 'Google Sign-In: signInWithCredential success', { uid: userCred.user.uid });
       } else {
         await signInWithPopup(auth, googleProvider);
       }
